@@ -6,6 +6,7 @@ public class Level : MonoBehaviour
     public GameObject levelPartPrefab;
     public Transform gridRoot;
     private LevelGrid m_LevelGrid;
+    public GameObject ballPrefab;
 
     private void Awake()
     {
