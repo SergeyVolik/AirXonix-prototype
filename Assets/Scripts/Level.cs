@@ -1,5 +1,6 @@
 using DG.Tweening;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -70,7 +71,7 @@ public class Level : MonoBehaviour
     public float levelDuration = 60;
     public event Action<float> onLevelProgressChanged;
     public event Action onLevelFinished;
-
+    private bool m_LevelFinished = false;
     [System.NonSerialized]
     public Ball[] balls;
     private Countdown m_Countdown;
@@ -88,7 +89,7 @@ public class Level : MonoBehaviour
         m_Countdown = new Countdown(levelDuration);
         m_Countdown.Pause();
         StartTimer();
-
+        totalProgressTiles = 0;
         foreach (var item in m_LevelGrid.gridItems)
         {
             if (!item.HasGround)
@@ -102,6 +103,9 @@ public class Level : MonoBehaviour
 
     private void M_LevelGrid_onGroundDestroyed()
     {
+        if (m_LevelFinished)
+            return;
+
         currentTilesProgress--;
         onLevelProgressChanged?.Invoke(GetProgress01());
     }
@@ -118,12 +122,16 @@ public class Level : MonoBehaviour
 
     private void M_LevelGrid_onGroundCreated()
     {
+        if (m_LevelFinished)
+            return;
+
         currentTilesProgress++;
         var percent = GetProgress01();
         onLevelProgressChanged?.Invoke(percent);
 
         if (percent == 1)
         {
+            m_LevelFinished = true;
             onLevelFinished?.Invoke();
         }
     }
@@ -174,7 +182,7 @@ public class Level : MonoBehaviour
         }
     }
 
-    public void TryFillArea(params LevelGridCell[] fillAreaCells)
+    IEnumerator TryFillArea_CO(params LevelGridCell[] fillAreaCells)
     {
         foreach (var fillCell in fillAreaCells)
         {
@@ -204,13 +212,20 @@ public class Level : MonoBehaviour
                     m_VisitedCells.Clear();
                 }
             }
+
+            yield return null;
         }
     }
 
-    private void Update()
+    public void TryFillArea(params LevelGridCell[] fillAreaCells)
     {
-        m_Countdown.Update(Time.deltaTime);
+        StartCoroutine(TryFillArea_CO(fillAreaCells));
 
+       
+    }
+
+    private void Update()
+    {      
 #if UNITY_EDITOR
         if (generateGrid)
         {
@@ -219,6 +234,8 @@ public class Level : MonoBehaviour
             m_LevelGrid = new LevelGrid(gridRoot, levelPartPrefab, levelTexture, destructableObstacles);
         }
 #endif
+        if(m_Countdown != null)
+            m_Countdown.Update(Time.deltaTime);
     }
 }
 

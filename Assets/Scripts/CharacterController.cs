@@ -76,7 +76,7 @@ public class CharacterController : MonoBehaviour
         var tailEnd = m_SnakeTail.GetTailEnd();
         var tailMiddle = m_SnakeTail.GetTailEnd();
 
-        m_Level.TryFillArea(tailPart, tailMiddle, tailEnd);
+        m_Level.TryFillArea(m_SnakeTail.TailCells.ToArray());
         m_SnakeTail.Clear();
     }
 

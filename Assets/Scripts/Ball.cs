@@ -7,12 +7,6 @@ public class Ball : MonoBehaviour
     private Vector3 velocity;
     public float speed;
 
-    [Inject]
-    void Construct(GameManager gm)
-    {
-        m_GM = gm;
-    }
-
     private void Awake()
     {
         m_Rigidbody = GetComponent<Rigidbody>();
@@ -21,7 +15,6 @@ public class Ball : MonoBehaviour
     }
 
     float m_PrevCollisionTime;
-    private GameManager m_GM;
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -40,14 +33,6 @@ public class Ball : MonoBehaviour
             {
                 ballObstacle.DestroyObstacle();
             }
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.GetComponent<CharacterController>())
-        {
-            m_GM.RestartLevel();
         }
     }
 
