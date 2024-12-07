@@ -282,7 +282,6 @@ public class LevelGrid : IDisposable
 #endif
     public GameObject SpawnGroundOnCell(LevelGridCell cell)
     {
-
         GameObject instance = GameObject.Instantiate(levelPartPrefab, cell.Transform);
         cell.HasGround = true;
         var obstacle = instance.GetComponent<BallObstacle>();

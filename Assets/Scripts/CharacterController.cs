@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 using static Cinemachine.DocumentationSortingAttribute;
+using static UnityEditor.Progress;
 
 public class CharacterController : MonoBehaviour
 {
@@ -12,7 +14,6 @@ public class CharacterController : MonoBehaviour
     private Vector2 m_SnakeDirection;
     private SnakeTail m_SnakeTail;
     public GameObject tailPrefab;
-    public GameObject tailtoDestoryPrefab;
 
     private GameManager m_gameManager;
 
@@ -25,6 +26,11 @@ public class CharacterController : MonoBehaviour
     private void Awake()
     {
         m_SnakeTail = new SnakeTail(tailPrefab);
+        m_SnakeTail.onSnakeHeadDestroyed += () =>
+        {
+            m_gameManager.RestartLevel();
+        };
+
         m_Transform = transform;
 
         m_Level = GetComponentInParent<Level>();
@@ -49,6 +55,8 @@ public class CharacterController : MonoBehaviour
         {
             SnakeMovement(input, cell);
         }
+
+        m_SnakeTail.Update();
     }
 
     private void ClearSnake()
@@ -58,19 +66,17 @@ public class CharacterController : MonoBehaviour
 
         m_SnakeDirection = Vector2.zero;
 
-        foreach (var item in m_SnakeTail.Tail)
+        for (int i = 0; i < m_SnakeTail.TailCells.Count; i++)
         {
-            item.ClearCell();
-            m_Level.m_LevelGrid.SpawnGroundOnCell(item);
+            if (m_SnakeTail.TailInstance[i] != null)
+                m_Level.m_LevelGrid.SpawnGroundOnCell(m_SnakeTail.TailCells[i]);
         }
-
        
         var tailPart = m_SnakeTail.GetHead();
         var tailEnd = m_SnakeTail.GetTailEnd();
         var tailMiddle = m_SnakeTail.GetTailEnd();
 
         m_Level.TryFillArea(tailPart, tailMiddle, tailEnd);
-
         m_SnakeTail.Clear();
     }
 
@@ -126,11 +132,19 @@ public class SnakeTail
     public static Vector2 headRight = new Vector2(1, 0);
 
     private List<LevelGridCell> m_SnakeTail = new List<LevelGridCell>();
+    private List<GameObject> m_SnakeTailInstances = new List<GameObject>();
 
-    public List<LevelGridCell> Tail => m_SnakeTail;
+    public List<LevelGridCell> TailCells => m_SnakeTail;
+    public List<GameObject> TailInstance => m_SnakeTailInstances;
+
 
     private GameObject m_snakeTailPrefab;
+    private bool tailDestroyProcessStarted;
+    private int startTailIndex;
+    private int destoryPrevIndex;
+    private int destroyNextIndex;
 
+    public event Action onSnakeHeadDestroyed;
     public SnakeTail(GameObject snakeTailPrefab)
     {
         m_snakeTailPrefab = snakeTailPrefab;
@@ -143,9 +157,28 @@ public class SnakeTail
 
     internal void AddTail(LevelGridCell cell)
     {
-        GameObject.Instantiate(m_snakeTailPrefab, cell.Transform);
+        var instance = GameObject.Instantiate(m_snakeTailPrefab, cell.Transform);
         m_SnakeTail.Add(cell);
+        m_SnakeTailInstances.Add(instance);
+        var index = m_SnakeTail.Count-1;
+        instance.GetComponent<TailPart>().onCollidedWithBall += ()=> {
+            StartSnakeDestroyProcess(index);
+        };
+       
         cell.IsTailPart = true;
+    }
+
+    private void StartSnakeDestroyProcess(int startTailIndex)
+    {
+        if (tailDestroyProcessStarted)
+            return;
+
+        tailDestroyProcessStarted = true;
+        this.startTailIndex = startTailIndex;
+        this.destoryPrevIndex = startTailIndex - 1;
+        this.destroyNextIndex = startTailIndex + 1;
+
+        GameObject.Destroy(TailInstance[startTailIndex]);
     }
 
     public bool IsHead(LevelGridCell cell)
@@ -155,11 +188,14 @@ public class SnakeTail
 
     public void Clear()
     {
-        foreach (var item in m_SnakeTail)
+        for (int i = 0; i < m_SnakeTail.Count; i++)
         {
-            item.IsTailPart = false;
+            m_SnakeTail[i].IsTailPart = false;
+            GameObject.Destroy(m_SnakeTailInstances[i]);
         }
-
+        destoryTick = 0;
+        tailDestroyProcessStarted = false;
+        m_SnakeTailInstances.Clear();
         m_SnakeTail.Clear();
     }
 
@@ -176,5 +212,43 @@ public class SnakeTail
     internal LevelGridCell GetTailMiddle()
     {
         return m_SnakeTail[(int)(m_SnakeTail.Count/2)];
+    }
+
+    float destoryTick;
+
+    public void Update()
+    {
+        const float destoryTickDuraction = 0.03f;
+
+        if (tailDestroyProcessStarted)
+        {
+            destoryTick += Time.deltaTime;
+
+            if (destoryTick > destoryTickDuraction)
+            {
+                destoryTick = 0;
+                bool canDestoryPrev = destoryPrevIndex >= 0;
+                bool canDestoryNext = destroyNextIndex <= m_SnakeTailInstances.Count - 1;
+
+                if (canDestoryPrev)
+                {
+                    GameObject.Destroy(m_SnakeTailInstances[destoryPrevIndex]);
+                    destoryPrevIndex--;
+                }
+
+                if (canDestoryNext)
+                {
+                    if (destroyNextIndex == m_SnakeTailInstances.Count - 1)
+                    {
+                        onSnakeHeadDestroyed?.Invoke();
+                    }
+                    GameObject.Destroy(m_SnakeTailInstances[destroyNextIndex]);
+                    destroyNextIndex++;
+                   
+                }
+
+                tailDestroyProcessStarted = canDestoryPrev || canDestoryNext;
+            }
+        }
     }
 }
