@@ -68,9 +68,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3e99c4a02751b04b8ffa4f6c05dc920, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 1
+  speed: 4
   tailPrefab: {fileID: 6709851676823323667, guid: 41185bf23971fb14293c4e19a7ceee4e, type: 3}
-  tailtoDestoryPrefab: {fileID: 6709851676823323667, guid: 022be3f34338df64dab3295fbdc4c713, type: 3}
+  moveInput: {x: 0, y: 0}
 --- !u!114 &4736403341355444153
 MonoBehaviour:
   m_ObjectHideFlags: 0

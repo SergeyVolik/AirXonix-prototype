@@ -67,6 +67,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07e7b413f4d208c48981bc9272ddf117, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  destructable: 0
+  girdCell:
+    <Transform>k__BackingField: {fileID: 0}
+    <HasGround>k__BackingField: 0
+    leftNeighbourIndex: -1
+    rightNeighbourIndex: -1
+    topNeighbourIndex: -1
+    downNeighbourIndex: -1
 --- !u!1001 &1807484681005516708
 PrefabInstance:
   m_ObjectHideFlags: 0

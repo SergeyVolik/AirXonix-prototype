@@ -79,9 +79,9 @@ public class Level : MonoBehaviour
     List<LevelGridCell> m_VisitedCells = new List<LevelGridCell>();
     List<LevelGridCell> m_BallsCells = new List<LevelGridCell>();
 
-    public int totalProgressTiles;
-    public int progressTilesToFinish;
-    public int currentTilesProgress;
+    private int m_TotalProgressTiles;
+    private int m_ProgressTilesToFinish;
+    private int m_CurrentTilesProgress;
 
     private void Awake()
     {
@@ -89,14 +89,14 @@ public class Level : MonoBehaviour
         m_Countdown = new Countdown(levelDuration);
         m_Countdown.Pause();
         StartTimer();
-        totalProgressTiles = 0;
+        m_TotalProgressTiles = 0;
         foreach (var item in m_LevelGrid.gridItems)
         {
             if (!item.HasGround)
-                totalProgressTiles++;
+                m_TotalProgressTiles++;
         }
 
-        progressTilesToFinish = (int)(totalProgressTiles * 0.9f);
+        m_ProgressTilesToFinish = (int)(m_TotalProgressTiles * 0.9f);
         m_LevelGrid.onGroundCreated += M_LevelGrid_onGroundCreated;
         m_LevelGrid.onGroundDestroyed += M_LevelGrid_onGroundDestroyed;
     }
@@ -106,13 +106,13 @@ public class Level : MonoBehaviour
         if (m_LevelFinished)
             return;
 
-        currentTilesProgress--;
+        m_CurrentTilesProgress--;
         onLevelProgressChanged?.Invoke(GetProgress01());
     }
 
     public float GetProgress01()
     {
-        return Mathf.Clamp01((float)currentTilesProgress / progressTilesToFinish);
+        return Mathf.Clamp01((float)m_CurrentTilesProgress / m_ProgressTilesToFinish);
     }
 
     public float GetProgressPercent()
@@ -125,7 +125,7 @@ public class Level : MonoBehaviour
         if (m_LevelFinished)
             return;
 
-        currentTilesProgress++;
+        m_CurrentTilesProgress++;
         var percent = GetProgress01();
         onLevelProgressChanged?.Invoke(percent);
 

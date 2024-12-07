@@ -1,12 +1,12 @@
 using UnityEngine;
 using Zenject;
 
-public class Ball : MonoBehaviour
+public class Ball : MonoBehaviour, IBallObstacle
 {
     private Rigidbody m_Rigidbody;
     private Vector3 velocity;
     public float speed;
-
+    public bool wallDestructor;
     private void Awake()
     {
         m_Rigidbody = GetComponent<Rigidbody>();
@@ -15,6 +15,8 @@ public class Ball : MonoBehaviour
     }
 
     float m_PrevCollisionTime;
+
+    public bool IsDestructable { get => false; set { } }
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -29,15 +31,29 @@ public class Ball : MonoBehaviour
         {
             velocity = Vector3.Reflect(velocity, collision.contacts[0].normal);
 
-            if (ballObstacle.IsDestructable)
+            if (wallDestructor)
             {
-                ballObstacle.DestroyObstacle();
+                if (ballObstacle.IsDestructable)
+                {
+                    ballObstacle.DestroyObstacle();
+                }
             }
+        }
+
+        var tailPart = collision.collider.GetComponent<TailPart>();
+        if (tailPart)
+        {
+            tailPart.DestroyObstacle();
         }
     }
 
     private void Update()
     {
         m_Rigidbody.velocity = velocity * speed;
+    }
+
+    public void DestroyObstacle()
+    {
+        throw new System.NotImplementedException();
     }
 }

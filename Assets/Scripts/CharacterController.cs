@@ -72,10 +72,6 @@ public class CharacterController : MonoBehaviour
                 m_Level.m_LevelGrid.SpawnGroundOnCell(m_SnakeTail.TailCells[i]);
         }
        
-        var tailPart = m_SnakeTail.GetHead();
-        var tailEnd = m_SnakeTail.GetTailEnd();
-        var tailMiddle = m_SnakeTail.GetTailEnd();
-
         m_Level.TryFillArea(m_SnakeTail.TailCells.ToArray());
         m_SnakeTail.Clear();
     }
