@@ -1,3 +1,5 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public interface IBallObstacle {
@@ -11,11 +13,12 @@ public class BallObstacle : MonoBehaviour, IBallObstacle
 
     [HideInInspector]
     public LevelGridCell girdCell;
-
+    public event Action onDestroyed;
     public bool IsDestructable { get => destructable; set => destructable = value; }
 
     public void DestroyObstacle()
     {
+        onDestroyed?.Invoke();
         girdCell.HasGround = false;
         GameObject.Destroy(gameObject);
     }

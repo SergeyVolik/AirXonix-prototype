@@ -5,8 +5,55 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
-using static Cinemachine.DocumentationSortingAttribute;
-using static UnityEditor.Progress;
+
+public class Countdown
+{
+    public float duration;
+    public float currentTime;
+
+    public event Action onFinished;
+    public event Action onTimeChanged;
+
+    public bool paused;
+    public bool finished;
+
+    public Countdown(float duration)
+    {
+        this.duration = duration;
+    }
+
+    public void Pause()
+    {
+        paused = true;
+    }
+    public void Continue()
+    {
+        paused = false;
+    }
+
+    public void Restart()
+    {
+        finished = false;
+        paused = false;
+        currentTime = 0;
+    }
+
+    public void Update(float deltaTime)
+    {
+        if (paused || finished)
+            return;
+
+        currentTime += deltaTime;
+     
+        if (currentTime > duration)
+        {
+            currentTime = duration;
+            finished = true;
+            onFinished?.Invoke();
+        }
+        onTimeChanged?.Invoke();
+    }
+}
 
 [ExecuteInEditMode]
 public class Level : MonoBehaviour
@@ -20,16 +67,66 @@ public class Level : MonoBehaviour
     public bool generateGrid;
     public bool destructableObstacles;
 
+    public float levelDuration = 60;
+    public event Action<float> onLevelProgressChanged;
+    public event Action onLevelFinished;
+
     [System.NonSerialized]
     public Ball[] balls;
+    private Countdown m_Countdown;
+    public Countdown Countdown => m_Countdown;
+    List<LevelGridCell> m_VisitedCells = new List<LevelGridCell>();
+    List<LevelGridCell> m_BallsCells = new List<LevelGridCell>();
+
+    public int totalProgressTiles;
+    public int progressTilesToFinish;
+    public int currentTilesProgress;
 
     private void Awake()
     {
         balls = GetComponentsInChildren<Ball>();
+        m_Countdown = new Countdown(levelDuration);
+        m_Countdown.Pause();
+        StartTimer();
+
+        foreach (var item in m_LevelGrid.gridItems)
+        {
+            if (!item.HasGround)
+                totalProgressTiles++;
+        }
+
+        progressTilesToFinish = (int)(totalProgressTiles * 0.9f);
+        m_LevelGrid.onGroundCreated += M_LevelGrid_onGroundCreated;
+        m_LevelGrid.onGroundDestroyed += M_LevelGrid_onGroundDestroyed;
     }
 
-    List<LevelGridCell> m_VisitedCells = new List<LevelGridCell>();
-    List<LevelGridCell> m_BallsCells = new List<LevelGridCell>();
+    private void M_LevelGrid_onGroundDestroyed()
+    {
+        currentTilesProgress--;
+        onLevelProgressChanged?.Invoke(GetProgress01());
+    }
+
+    public float GetProgress01()
+    {
+        return Mathf.Clamp01((float)currentTilesProgress / progressTilesToFinish);
+    }
+
+    public float GetProgressPercent()
+    {
+        return GetProgress01()*100;
+    }
+
+    private void M_LevelGrid_onGroundCreated()
+    {
+        currentTilesProgress++;
+        var percent = GetProgress01();
+        onLevelProgressChanged?.Invoke(percent);
+
+        if (percent == 1)
+        {
+            onLevelFinished?.Invoke();
+        }
+    }
 
     private void CollectAllAreaCells(LevelGridCell notGroundCell, out bool areaHasBall)
     {
@@ -41,6 +138,11 @@ public class Level : MonoBehaviour
 
         areaHasBall = false;
         VisitAreaCell(notGroundCell, ref areaHasBall);
+    }
+
+    public void StartTimer()
+    {
+        m_Countdown.Restart();
     }
 
     private void VisitAreaCell(LevelGridCell cell, ref bool areaHasBall)
@@ -107,6 +209,8 @@ public class Level : MonoBehaviour
 
     private void Update()
     {
+        m_Countdown.Update(Time.deltaTime);
+
 #if UNITY_EDITOR
         if (generateGrid)
         {
@@ -171,6 +275,8 @@ public class LevelGrid : IDisposable
     public int width;
     private int height;
 
+    public event Action onGroundCreated;
+    public event Action onGroundDestroyed;
 
     public LevelGrid() { }
 #if UNITY_EDITOR
@@ -282,12 +388,19 @@ public class LevelGrid : IDisposable
 #endif
     public GameObject SpawnGroundOnCell(LevelGridCell cell)
     {
+        onGroundCreated?.Invoke();
         GameObject instance = GameObject.Instantiate(levelPartPrefab, cell.Transform);
         cell.HasGround = true;
         var obstacle = instance.GetComponent<BallObstacle>();
+        obstacle.onDestroyed += Obstacle_onDestroyed;
         obstacle.destructable = true;
         obstacle.girdCell = cell;
         return instance;
+    }
+
+    private void Obstacle_onDestroyed()
+    {
+        onGroundDestroyed?.Invoke();
     }
 
     public void Dispose()
