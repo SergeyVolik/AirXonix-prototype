@@ -31,21 +31,21 @@ public class Ball : MonoBehaviour
         }
 
         m_PrevCollisionTime = Time.time;
-        var ballObstacle = collision.collider.GetComponent<BallObstacle>();
+        var ballObstacle = collision.collider.GetComponent<IBallObstacle>();
         if (ballObstacle != null)
         {
             velocity = Vector3.Reflect(velocity, collision.contacts[0].normal);
 
-            if (ballObstacle.destructable)
+            if (ballObstacle.IsDestructable)
             {
-                ballObstacle.DestoryObstacle();
+                ballObstacle.DestroyObstacle();
             }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<Player>())
+        if (other.GetComponent<CharacterController>())
         {
             m_GM.RestartLevel();
         }

@@ -1,16 +1,22 @@
-using System;
 using UnityEngine;
 
-public interface IBallObstacle { }
+public interface IBallObstacle {
+    bool IsDestructable { get; set; }
+    void DestroyObstacle();
+}
 
 public class BallObstacle : MonoBehaviour, IBallObstacle
 {
     public bool destructable;
+
+    [HideInInspector]
     public LevelGridCell girdCell;
-    internal void DestoryObstacle()
+
+    public bool IsDestructable { get => destructable; set => destructable = value; }
+
+    public void DestroyObstacle()
     {
         girdCell.HasGround = false;
-
         GameObject.Destroy(gameObject);
     }
 }

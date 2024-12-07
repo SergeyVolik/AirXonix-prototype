@@ -1,18 +1,15 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-public class TailPart : MonoBehaviour
+public class TailPart : MonoBehaviour, IBallObstacle
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [field: SerializeField]
+    public bool IsDestructable { get; set; } = true;
 
-    // Update is called once per frame
-    void Update()
+    public event Action onCollidedWithBall;
+
+    public void DestroyObstacle()
     {
-        
+        onCollidedWithBall?.Invoke();
     }
 }

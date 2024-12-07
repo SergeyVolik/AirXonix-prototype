@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
+using static Cinemachine.DocumentationSortingAttribute;
 using static UnityEditor.Progress;
 
 [ExecuteInEditMode]
@@ -25,6 +26,83 @@ public class Level : MonoBehaviour
     private void Awake()
     {
         balls = GetComponentsInChildren<Ball>();
+    }
+
+    List<LevelGridCell> m_VisitedCells = new List<LevelGridCell>();
+    List<LevelGridCell> m_BallsCells = new List<LevelGridCell>();
+
+    private void CollectAllAreaCells(LevelGridCell notGroundCell, out bool areaHasBall)
+    {
+        m_BallsCells.Clear();
+        foreach (var item in balls)
+        {
+            m_BallsCells.Add(m_LevelGrid.GetClosestCell(item.transform.position));
+        }
+
+        areaHasBall = false;
+        VisitAreaCell(notGroundCell, ref areaHasBall);
+    }
+
+    private void VisitAreaCell(LevelGridCell cell, ref bool areaHasBall)
+    {
+        if (areaHasBall)
+            return;
+
+        foreach (var item in m_BallsCells)
+        {
+            if (cell == item)
+            {
+                areaHasBall = true;
+                return;
+            }
+        }
+
+        if (cell.HasGround)
+            return;
+
+        if (cell.IsAlreadyVisited)
+            return;
+
+        cell.IsAlreadyVisited = true;
+        m_VisitedCells.Add(cell);
+
+        foreach (var item in m_LevelGrid.IterNeighbours(cell))
+        {
+            VisitAreaCell(item, ref areaHasBall);
+        }
+    }
+
+    public void TryFillArea(params LevelGridCell[] fillAreaCells)
+    {
+        foreach (var fillCell in fillAreaCells)
+        {
+            foreach (var cell in m_LevelGrid.IterNeighbours(fillCell))
+            {
+                if (!cell.HasGround)
+                {
+                    var notGroundCell = cell;
+                    CollectAllAreaCells(notGroundCell, out bool hasBall);
+
+                    if (!hasBall)
+                    {
+                        foreach (var item2 in m_VisitedCells)
+                        {
+                            item2.IsAlreadyVisited = false;
+                            m_LevelGrid.SpawnGroundOnCell(item2, 0.6f);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var item2 in m_VisitedCells)
+                        {
+                            item2.IsAlreadyVisited = false;
+                        }
+                    }
+
+                    m_VisitedCells.Clear();
+                }
+            }
+        }
     }
 
     private void Update()
@@ -93,7 +171,7 @@ public class LevelGrid : IDisposable
     public int width;
     private int height;
 
-    
+
     public LevelGrid() { }
 #if UNITY_EDITOR
     public LevelGrid(Transform gridRoot, GameObject levelPartPrefab, Texture2D levelTexture, bool destructableObstacles)
@@ -186,7 +264,7 @@ public class LevelGrid : IDisposable
     {
         var item = SpawnGroundOnCell(cell);
 
-        item.transform.localPosition = new Vector3(0, -0.5f, 0); 
+        item.transform.localPosition = new Vector3(0, -0.5f, 0);
         item.transform.DOLocalMoveY(0, showTime).SetEase(Ease.OutSine);
 
         return item;

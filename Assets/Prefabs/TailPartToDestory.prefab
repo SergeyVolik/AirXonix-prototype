@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 4265378508431413011}
   - component: {fileID: 6387325387944443940}
   - component: {fileID: 1090544756932963135}
-  - component: {fileID: -4080252478222990855}
   m_Layer: 0
-  m_Name: TailPart
+  m_Name: TailPartToDestory
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76,18 +75,6 @@ MonoBehaviour:
     rightNeighbourIndex: -1
     topNeighbourIndex: -1
     downNeighbourIndex: -1
---- !u!114 &-4080252478222990855
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6709851676823323667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 148dcaf71692cba429c24634b9942d27, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1807484681005516708
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -139,7 +126,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 46e1f985a1b14444cb70808befba2548, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 26e2e828131003f42be5f27af59cc5c0, type: 2}
+      objectReference: {fileID: 2100000, guid: 8f3921184738e724198a9817f72ec830, type: 2}
     - target: {fileID: 919132149155446097, guid: 46e1f985a1b14444cb70808befba2548, type: 3}
       propertyPath: m_Name
       value: levelGround

@@ -1,18 +1,19 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
-using static UnityEditor.Progress;
+using static Cinemachine.DocumentationSortingAttribute;
 
-public class Player : MonoBehaviour
+public class CharacterController : MonoBehaviour
 {
-    private PlayerControlls playerControlls;
+ 
     public float speed = 1f;
     private Transform m_Transform;
     private Level m_Level;
     private Vector2 m_SnakeDirection;
     private SnakeTail m_SnakeTail;
     public GameObject tailPrefab;
+    public GameObject tailtoDestoryPrefab;
+
     private GameManager m_gameManager;
 
     [Inject]
@@ -24,21 +25,16 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         m_SnakeTail = new SnakeTail(tailPrefab);
-        playerControlls = new PlayerControlls();
-        playerControlls.Enable();
         m_Transform = transform;
 
         m_Level = GetComponentInParent<Level>();
     }
 
-    private void OnDestroy()
-    {
-        playerControlls.Disable();
-    }
+    public Vector2 moveInput;
 
     private void Update()
     {
-        var input = playerControlls.Input.Movement.ReadValue<Vector2>();
+        var input = moveInput;
 
         var cell = m_Level.m_LevelGrid.GetClosestCell(m_Transform.position);
 
@@ -68,90 +64,14 @@ public class Player : MonoBehaviour
             m_Level.m_LevelGrid.SpawnGroundOnCell(item);
         }
 
+       
         var tailPart = m_SnakeTail.GetHead();
         var tailEnd = m_SnakeTail.GetTailEnd();
         var tailMiddle = m_SnakeTail.GetTailEnd();
 
-        TryFillArea(tailPart);
-        TryFillArea(tailEnd);
-        TryFillArea(tailMiddle);
+        m_Level.TryFillArea(tailPart, tailMiddle, tailEnd);
 
         m_SnakeTail.Clear();
-    }
-
-    private void TryFillArea(LevelGridCell tailPart)
-    {
-        foreach (var cell in m_Level.m_LevelGrid.IterNeighbours(tailPart))
-        {
-            if (!cell.HasGround)
-            {
-                var notGroundCell = cell;
-                CollectAllAreaCells(notGroundCell, out bool hasBall);
-
-                if (!hasBall)
-                {
-                    foreach (var item2 in m_VisitedCells)
-                    {
-                        item2.IsAlreadyVisited = false;
-                        m_Level.m_LevelGrid.SpawnGroundOnCell(item2, 0.6f);
-                    }
-                }
-                else
-                {
-                    foreach (var item2 in m_VisitedCells)
-                    {
-                        item2.IsAlreadyVisited = false;
-                    }
-                }
-
-                m_VisitedCells.Clear();
-            }
-        }
-
-    }
-
-    List<LevelGridCell> m_VisitedCells = new List<LevelGridCell>();
-    List<LevelGridCell> m_BallsCells = new List<LevelGridCell>();
-
-    private void CollectAllAreaCells(LevelGridCell notGroundCell, out bool areaHasBall)
-    {
-        m_BallsCells.Clear();
-        foreach (var item in m_Level.balls)
-        {
-            m_BallsCells.Add(m_Level.m_LevelGrid.GetClosestCell(item.transform.position));
-        }
-
-        areaHasBall = false;
-        VisitAreaCell(notGroundCell, ref areaHasBall);
-    }
-
-    private void VisitAreaCell(LevelGridCell cell, ref bool areaHasBall)
-    {
-        if (areaHasBall)
-            return;
-
-        foreach (var item in m_BallsCells)
-        {
-            if (cell == item)
-            {
-                areaHasBall = true;
-                return;
-            }
-        }
-
-        if (cell.HasGround)
-            return;
-
-        if (cell.IsAlreadyVisited)
-            return;
-
-        cell.IsAlreadyVisited = true;
-        m_VisitedCells.Add(cell);
-
-        foreach (var item in m_Level.m_LevelGrid.IterNeighbours(cell))
-        {
-            VisitAreaCell(item, ref areaHasBall);
-        }
     }
 
     private static Vector2 UpdateInput(Vector2 input)
