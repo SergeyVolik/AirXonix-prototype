@@ -1,10 +1,17 @@
 using UnityEngine;
+using Zenject;
 
 public class Ball : MonoBehaviour
 {
     private Rigidbody m_Rigidbody;
     private Vector3 velocity;
     public float speed;
+
+    [Inject]
+    void Construct(GameManager gm)
+    {
+        m_GM = gm;
+    }
 
     private void Awake()
     {
@@ -14,6 +21,8 @@ public class Ball : MonoBehaviour
     }
 
     float m_PrevCollisionTime;
+    private GameManager m_GM;
+
     private void OnCollisionEnter(Collision collision)
     {
         if (m_PrevCollisionTime + 0.05f > Time.time)
@@ -22,11 +31,24 @@ public class Ball : MonoBehaviour
         }
 
         m_PrevCollisionTime = Time.time;
-
-        if (collision.collider.GetComponent<BallObstacle>())
+        var ballObstacle = collision.collider.GetComponent<BallObstacle>();
+        if (ballObstacle != null)
         {
             velocity = Vector3.Reflect(velocity, collision.contacts[0].normal);
-        }    
+
+            if (ballObstacle.destructable)
+            {
+                ballObstacle.DestoryObstacle();
+            }
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.GetComponent<Player>())
+        {
+            m_GM.RestartLevel();
+        }
     }
 
     private void Update()

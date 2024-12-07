@@ -1,18 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-public class BallObstacle : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+public interface IBallObstacle { }
 
-    // Update is called once per frame
-    void Update()
+public class BallObstacle : MonoBehaviour, IBallObstacle
+{
+    public bool destructable;
+    public LevelGridCell girdCell;
+    internal void DestoryObstacle()
     {
-        
+        girdCell.HasGround = false;
+
+        GameObject.Destroy(gameObject);
     }
 }

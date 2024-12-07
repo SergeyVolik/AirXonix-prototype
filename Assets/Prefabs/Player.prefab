@@ -49,12 +49,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.5, y: 0.5, z: 0.5}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.25, z: 0}
 --- !u!114 &6644535477574848236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,6 +67,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3e99c4a02751b04b8ffa4f6c05dc920, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speed: 1
+  tailPrefab: {fileID: 6709851676823323667, guid: 41185bf23971fb14293c4e19a7ceee4e, type: 3}
 --- !u!1 &5216105397444043613
 GameObject:
   m_ObjectHideFlags: 0
@@ -94,7 +96,7 @@ Transform:
   m_GameObject: {fileID: 5216105397444043613}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
