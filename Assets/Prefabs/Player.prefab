@@ -71,6 +71,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 3
   tailPrefab: {fileID: 6709851676823323667, guid: 41185bf23971fb14293c4e19a7ceee4e, type: 3}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 8
   moveInput: {x: 0, y: 0}
 --- !u!114 &4736403341355444153
 MonoBehaviour:

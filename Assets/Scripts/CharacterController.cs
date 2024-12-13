@@ -15,14 +15,7 @@ public class CharacterController : MonoBehaviour
     public GameObject tailPrefab;
     public event Action onSnakeSelfCollision;
 
-    private GameManager m_gameManager;
-
-    [Inject]
-    void Construct(GameManager gameManager)
-    {
-        m_gameManager = gameManager;
-    }
-
+    public LayerMask groundMask;
     public void BindLevel(Level level)
     {
         m_Level = level;
@@ -71,7 +64,7 @@ public class CharacterController : MonoBehaviour
             if (m_SnakeTail.TailInstance[i] != null)
                 m_Level.Grid.SpawnGroundOnCell(m_SnakeTail.TailCells[i]);
         }
-       
+
         m_Level.TryFillArea(m_SnakeTail.TailCells.ToArray());
         m_SnakeTail.Clear();
     }
@@ -97,7 +90,13 @@ public class CharacterController : MonoBehaviour
 
     private void SimpleMovement(Vector2 moveInpute)
     {
-        m_Transform.position += new Vector3(moveInpute.x, 0, moveInpute.y) * speed * Time.deltaTime;
+        var nextPos = m_Transform.position + new Vector3(moveInpute.x, 0, moveInpute.y) * speed * Time.deltaTime;
+        if (!m_Level.Bounds.Contains(nextPos))
+        {
+            return;
+        }
+
+        m_Transform.position = nextPos;
     }
 
     private void SnakeMovement(Vector2 moveInpute, LevelGridCell cell)
@@ -116,7 +115,9 @@ public class CharacterController : MonoBehaviour
             onSnakeSelfCollision?.Invoke();
         }
 
-        m_Transform.position += new Vector3(m_SnakeDirection.x, 0, m_SnakeDirection.y) * speed * Time.deltaTime;
+        var nextPos = m_Transform.position + new Vector3(m_SnakeDirection.x, 0, m_SnakeDirection.y) * speed * Time.deltaTime;
+
+        m_Transform.position = nextPos;
     }
 }
 
@@ -156,11 +157,12 @@ public class SnakeTail
         var instance = GameObject.Instantiate(m_snakeTailPrefab, cell.Transform);
         m_SnakeTail.Add(cell);
         m_SnakeTailInstances.Add(instance);
-        var index = m_SnakeTail.Count-1;
-        instance.GetComponent<TailPart>().onCollidedWithBall += ()=> {
+        var index = m_SnakeTail.Count - 1;
+        instance.GetComponent<TailPart>().onCollidedWithBall += () =>
+        {
             StartSnakeDestroyProcess(index);
         };
-       
+
         cell.IsTailPart = true;
     }
 
@@ -207,7 +209,7 @@ public class SnakeTail
 
     internal LevelGridCell GetTailMiddle()
     {
-        return m_SnakeTail[(int)(m_SnakeTail.Count/2)];
+        return m_SnakeTail[(int)(m_SnakeTail.Count / 2)];
     }
 
     float destoryTick;
@@ -240,7 +242,7 @@ public class SnakeTail
                     }
                     GameObject.Destroy(m_SnakeTailInstances[destroyNextIndex]);
                     destroyNextIndex++;
-                   
+
                 }
 
                 tailDestroyProcessStarted = canDestoryPrev || canDestoryNext;

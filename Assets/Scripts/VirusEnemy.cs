@@ -52,7 +52,7 @@ public class VirusEnemy : MonoBehaviour
                 normal.x = 1;
             }
 
-            velocity = Vector3.Reflect(velocity, normal);
+            velocity = Vector3.Reflect(velocity, normal).normalized;
         }
 
         m_Transform.position = nextPos;

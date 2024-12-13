@@ -3,6 +3,7 @@ using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -95,17 +96,18 @@ public class Level : MonoBehaviour
     private IPlayerFactory m_playerFactory;
 
     public CinemachineVirtualCamera vCamera;
+
     [Inject]
     void Construct(IPlayerFactory playerFactory)
     {
         m_playerFactory = playerFactory;
     }
 
+    public Bounds bounds;
+
+    public Bounds Bounds => bounds;
     private void Awake()
     {
-        if (!Application.isPlaying)
-            return;
-
         balls = GetComponentsInChildren<Ball>();
         m_Countdown = new Countdown(levelDuration);
         m_Countdown.Pause();
@@ -129,7 +131,18 @@ public class Level : MonoBehaviour
         if (!Application.isPlaying)
             return;
 
+        CalculateLevelBounds();
         SpawnPlayer();
+    }
+
+    private void CalculateLevelBounds()
+    {
+        bounds = Grid.CalculateBounds();
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireCube(bounds.center, bounds.size);
     }
 
     private void SpawnPlayer()
@@ -364,16 +377,16 @@ public class LevelGrid : IDisposable
     public Transform gridRoot;
     public GameObject levelPartPrefab;
     private bool destructableObstacles;
-    [HideInInspector]
+    //[HideInInspector]
     public LevelGridCell[] gridItems;
 
     const float CELL_WIDTH = 0.2f;
     const float CELL_HEIGHT = 0.2f;
 
-    [HideInInspector]
+    //[HideInInspector]
     public int width;
-    private int height;
-
+    //[HideInInspector]
+    public int height;
     public event Action onGroundCreated;
     public event Action onGroundDestroyed;
 
@@ -486,7 +499,7 @@ public class LevelGrid : IDisposable
         GameObject instance = PrefabUtility.InstantiatePrefab(levelPartPrefab) as GameObject;
         instance.transform.parent = cell.Transform;
         instance.transform.localPosition = Vector3.zero;
-
+        cell.HasGround = true;
         return instance;
     }
 #endif
@@ -530,5 +543,24 @@ public class LevelGrid : IDisposable
         }
 
         return closestCell;
+    }
+
+    internal Bounds CalculateBounds()
+    {
+        Vector3 pos1 = gridItems[0].Transform.position;
+        Vector3 pos2 = gridItems[height-1].Transform.position;
+        Vector3 pos3 = gridItems[width * height - 1].Transform.position;
+        Vector3 pos4 = gridItems[(width - 1) * height].Transform.position;
+
+        var maxX = Mathf.Max(pos1.x, pos2.x, pos3.x, pos4.x);
+        var minX = Mathf.Min(pos2.x, pos2.x, pos3.x, pos4.x);
+        var maxZ = Mathf.Max(pos1.z, pos2.z, pos3.z, pos4.z);
+        var minZ = Mathf.Min(pos2.z, pos2.z, pos3.z, pos4.z);
+
+        var size = new Vector3(maxX - minX, 1, maxZ - minZ);
+
+        Vector3 center = new Vector3((maxX + minX) / 2, 0.5f, (maxZ + minZ) / 2);
+
+        return new Bounds(center, size);
     }
 }
