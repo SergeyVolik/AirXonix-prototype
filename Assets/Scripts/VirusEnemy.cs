@@ -16,8 +16,6 @@ public class VirusEnemy : MonoBehaviour
 
     private void Awake()
     {
-        var vel = Random.onUnitSphere;
-
         var sign1 = Mathf.Sign(Random.Range(-1f, 1));
         var sign2 = Mathf.Sign(Random.Range(-1f, 1));
 
@@ -39,15 +37,15 @@ public class VirusEnemy : MonoBehaviour
             {
                 normal.z = 1;
             }
-            if (!cell.IsValidTop() || !m_Level.Grid.GetCell(cell.topNeighbourIndex).HasGround)
+            else if (!cell.IsValidTop() || !m_Level.Grid.GetCell(cell.topNeighbourIndex).HasGround)
             {
                 normal.z = -1;
             }
-            if (!cell.IsValidLeft() || !m_Level.Grid.GetCell(cell.leftNeighbourIndex).HasGround)
+            else if (!cell.IsValidLeft() || !m_Level.Grid.GetCell(cell.leftNeighbourIndex).HasGround)
             {
                 normal.x = -1;
             }
-            if (!cell.IsValidRight() || !m_Level.Grid.GetCell(cell.rightNeighbourIndex).HasGround)
+            else if (!cell.IsValidRight() || !m_Level.Grid.GetCell(cell.rightNeighbourIndex).HasGround)
             {
                 normal.x = 1;
             }
@@ -56,5 +54,14 @@ public class VirusEnemy : MonoBehaviour
         }
 
         m_Transform.position = nextPos;
+    }
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.TryGetComponent<CharacterController>(out var character))
+        {
+            character.ForceDeath();
+        }
     }
 }

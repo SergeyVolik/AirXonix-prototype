@@ -35,6 +35,12 @@ public class GameManager : MonoBehaviour
         var charController = obj.GetComponent<CharacterController>();
         charController.SnakeTail.onSnakeHeadDestroyed += RestartLevel;
         charController.onSnakeSelfCollision += RestartLevel;
+        charController.onDeath += CharController_onDeath;
+    }
+
+    private void CharController_onDeath()
+    {
+        RestartLevel();
     }
 
     private void M_LevelInstance_onLevelFinished()

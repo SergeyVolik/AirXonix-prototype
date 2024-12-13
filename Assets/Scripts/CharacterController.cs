@@ -14,6 +14,7 @@ public class CharacterController : MonoBehaviour
 
     public GameObject tailPrefab;
     public event Action onSnakeSelfCollision;
+    public event Action onDeath;
 
     public LayerMask groundMask;
     public void BindLevel(Level level)
@@ -49,7 +50,7 @@ public class CharacterController : MonoBehaviour
             SnakeMovement(input, cell);
         }
 
-        m_SnakeTail.Update();
+        m_SnakeTail.Update(Time.deltaTime);
     }
 
     private void ClearSnake()
@@ -118,6 +119,11 @@ public class CharacterController : MonoBehaviour
         var nextPos = m_Transform.position + new Vector3(m_SnakeDirection.x, 0, m_SnakeDirection.y) * speed * Time.deltaTime;
 
         m_Transform.position = nextPos;
+    }
+
+    internal void ForceDeath()
+    {
+        onDeath?.Invoke();
     }
 }
 
@@ -214,13 +220,13 @@ public class SnakeTail
 
     float destoryTick;
 
-    public void Update()
+    public void Update(float delta)
     {
         const float destoryTickDuraction = 0.03f;
 
         if (tailDestroyProcessStarted)
         {
-            destoryTick += Time.deltaTime;
+            destoryTick += delta;
 
             if (destoryTick > destoryTickDuraction)
             {
