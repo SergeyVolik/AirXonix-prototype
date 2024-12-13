@@ -4,12 +4,13 @@ using Zenject;
 
 public class GameManager : MonoBehaviour
 {
-    private LevelFactory m_LevelFactory;
+    private ILevelFactory m_LevelFactory;
     private Level m_LevelInstance;
 
     public event Action<Level> onLevelCreated;
+
     [Inject]
-    void Construct(LevelFactory levelFactory)
+    void Construct(ILevelFactory levelFactory)
     {
         m_LevelFactory = levelFactory;
     }
@@ -26,6 +27,14 @@ public class GameManager : MonoBehaviour
 
         m_LevelInstance.Countdown.onFinished += Countdown_onFinished;
         m_LevelInstance.onLevelFinished += M_LevelInstance_onLevelFinished;
+        m_LevelInstance.onPlayerSpawned += M_LevelInstance_onPlayerSpawned;
+    }
+
+    private void M_LevelInstance_onPlayerSpawned(GameObject obj)
+    {
+        var charController = obj.GetComponent<CharacterController>();
+        charController.SnakeTail.onSnakeHeadDestroyed += RestartLevel;
+        charController.onSnakeSelfCollision += RestartLevel;
     }
 
     private void M_LevelInstance_onLevelFinished()

@@ -1,3 +1,4 @@
+using Cinemachine;
 using DG.Tweening;
 using System;
 using System.Collections;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
+using Zenject;
 
 public class Countdown
 {
@@ -45,7 +47,7 @@ public class Countdown
             return;
 
         currentTime += deltaTime;
-     
+
         if (currentTime > duration)
         {
             currentTime = duration;
@@ -62,7 +64,11 @@ public class Level : MonoBehaviour
     public Texture2D levelTexture;
     public GameObject levelPartPrefab;
     public Transform gridRoot;
-    public LevelGrid m_LevelGrid;
+    [SerializeField]
+    private LevelGrid m_LevelGrid;
+
+    public LevelGrid Grid => m_LevelGrid;
+
     public GameObject ballPrefab;
 
     public bool generateGrid;
@@ -71,6 +77,8 @@ public class Level : MonoBehaviour
     public float levelDuration = 60;
     public event Action<float> onLevelProgressChanged;
     public event Action onLevelFinished;
+    public event Action<GameObject> onPlayerSpawned;
+
     private bool m_LevelFinished = false;
     [System.NonSerialized]
     public Ball[] balls;
@@ -83,8 +91,21 @@ public class Level : MonoBehaviour
     private int m_ProgressTilesToFinish;
     private int m_CurrentTilesProgress;
 
+    public Transform playerSpawnPoint;
+    private IPlayerFactory m_playerFactory;
+
+    public CinemachineVirtualCamera vCamera;
+    [Inject]
+    void Construct(IPlayerFactory playerFactory)
+    {
+        m_playerFactory = playerFactory;
+    }
+
     private void Awake()
     {
+        if (!Application.isPlaying)
+            return;
+
         balls = GetComponentsInChildren<Ball>();
         m_Countdown = new Countdown(levelDuration);
         m_Countdown.Pause();
@@ -99,6 +120,38 @@ public class Level : MonoBehaviour
         m_ProgressTilesToFinish = (int)(m_TotalProgressTiles * 0.9f);
         m_LevelGrid.onGroundCreated += M_LevelGrid_onGroundCreated;
         m_LevelGrid.onGroundDestroyed += M_LevelGrid_onGroundDestroyed;
+
+        SetupLevelObjects();
+    }
+
+    private void Start()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        SpawnPlayer();
+    }
+
+    private void SpawnPlayer()
+    {
+        var player = m_playerFactory.SpawnPlayer(playerSpawnPoint.position);
+        player.transform.parent = transform;
+        player.transform.position = playerSpawnPoint.position;
+        player.GetComponent<CharacterController>().BindLevel(this);
+        vCamera.Follow = player.transform;
+        vCamera.LookAt = player.transform;
+
+        onPlayerSpawned?.Invoke(player);
+    }
+
+    private void SetupLevelObjects()
+    {
+        var viruses = GetComponentsInChildren<VirusEnemy>();
+
+        foreach (var item in viruses)
+        {
+            item.Construct(this);
+        }
     }
 
     private void M_LevelGrid_onGroundDestroyed()
@@ -117,7 +170,7 @@ public class Level : MonoBehaviour
 
     public float GetProgressPercent()
     {
-        return GetProgress01()*100;
+        return GetProgress01() * 100;
     }
 
     private void M_LevelGrid_onGroundCreated()
@@ -220,12 +273,10 @@ public class Level : MonoBehaviour
     public void TryFillArea(params LevelGridCell[] fillAreaCells)
     {
         StartCoroutine(TryFillArea_CO(fillAreaCells));
-
-       
     }
 
     private void Update()
-    {      
+    {
 #if UNITY_EDITOR
         if (generateGrid)
         {
@@ -234,8 +285,13 @@ public class Level : MonoBehaviour
             m_LevelGrid = new LevelGrid(gridRoot, levelPartPrefab, levelTexture, destructableObstacles);
         }
 #endif
-        if(m_Countdown != null)
+        if (m_Countdown != null)
             m_Countdown.Update(Time.deltaTime);
+    }
+
+    internal void GetPlayer()
+    {
+        throw new NotImplementedException();
     }
 }
 
@@ -254,6 +310,7 @@ public class LevelGridCell : IDisposable
     public int topNeighbourIndex = -1;
     public int downNeighbourIndex = -1;
 
+
     public bool IsAlreadyVisited { get; set; }
     public LevelGridCell() { }
 
@@ -266,6 +323,30 @@ public class LevelGridCell : IDisposable
     {
         if (Transform)
             GameObject.DestroyImmediate(Transform.gameObject);
+    }
+    private bool IsValidIndex(int index)
+    {
+        return index != -1;
+    }
+
+    public bool IsValidTop()
+    {
+        return IsValidIndex(topNeighbourIndex);
+    }
+
+    public bool IsValidDown()
+    {
+        return IsValidIndex(downNeighbourIndex);
+    }
+
+    public bool IsValidLeft()
+    {
+        return IsValidIndex(leftNeighbourIndex);
+    }
+
+    public bool IsValidRight()
+    {
+        return IsValidIndex(rightNeighbourIndex);
     }
 
     internal void ClearCell()
@@ -283,6 +364,7 @@ public class LevelGrid : IDisposable
     public Transform gridRoot;
     public GameObject levelPartPrefab;
     private bool destructableObstacles;
+    [HideInInspector]
     public LevelGridCell[] gridItems;
 
     const float CELL_WIDTH = 0.2f;
@@ -376,6 +458,11 @@ public class LevelGrid : IDisposable
             yield return gridItems[cell.topNeighbourIndex];
         if (cell.downNeighbourIndex != -1)
             yield return gridItems[cell.downNeighbourIndex];
+    }
+
+    public LevelGridCell GetCell(int index)
+    {
+        return gridItems[index];
     }
 
     public LevelGridCell GetCell(int x, int y)

@@ -10,8 +10,11 @@ public class Ball : MonoBehaviour, IBallObstacle
     private void Awake()
     {
         m_Rigidbody = GetComponent<Rigidbody>();
-        var vel = Random.onUnitSphere;
-        velocity = new Vector3(vel.x, 0, vel.z).normalized;
+
+        var sign1 = Mathf.Sign(Random.Range(-1f, 1));
+        var sign2 = Mathf.Sign(Random.Range(-1f, 1));
+
+        velocity = new Vector3(1* sign1, 0, 1* sign2).normalized;
     }
 
     float m_PrevCollisionTime;

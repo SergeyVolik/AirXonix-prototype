@@ -2,18 +2,18 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
-using static Cinemachine.DocumentationSortingAttribute;
-using static UnityEditor.Progress;
 
 public class CharacterController : MonoBehaviour
 {
- 
     public float speed = 1f;
     private Transform m_Transform;
     private Level m_Level;
     private Vector2 m_SnakeDirection;
     private SnakeTail m_SnakeTail;
+    public SnakeTail SnakeTail => m_SnakeTail;
+
     public GameObject tailPrefab;
+    public event Action onSnakeSelfCollision;
 
     private GameManager m_gameManager;
 
@@ -23,14 +23,14 @@ public class CharacterController : MonoBehaviour
         m_gameManager = gameManager;
     }
 
+    public void BindLevel(Level level)
+    {
+        m_Level = level;
+    }
+
     private void Awake()
     {
         m_SnakeTail = new SnakeTail(tailPrefab);
-        m_SnakeTail.onSnakeHeadDestroyed += () =>
-        {
-            m_gameManager.RestartLevel();
-        };
-
         m_Transform = transform;
 
         m_Level = GetComponentInParent<Level>();
@@ -42,7 +42,7 @@ public class CharacterController : MonoBehaviour
     {
         var input = moveInput;
 
-        var cell = m_Level.m_LevelGrid.GetClosestCell(m_Transform.position);
+        var cell = m_Level.Grid.GetClosestCell(m_Transform.position);
 
         input = UpdateInput(input);
 
@@ -69,7 +69,7 @@ public class CharacterController : MonoBehaviour
         for (int i = 0; i < m_SnakeTail.TailCells.Count; i++)
         {
             if (m_SnakeTail.TailInstance[i] != null)
-                m_Level.m_LevelGrid.SpawnGroundOnCell(m_SnakeTail.TailCells[i]);
+                m_Level.Grid.SpawnGroundOnCell(m_SnakeTail.TailCells[i]);
         }
        
         m_Level.TryFillArea(m_SnakeTail.TailCells.ToArray());
@@ -113,7 +113,7 @@ public class CharacterController : MonoBehaviour
         }
         else if (!m_SnakeTail.IsHead(cell))
         {
-            m_gameManager.RestartLevel();
+            onSnakeSelfCollision?.Invoke();
         }
 
         m_Transform.position += new Vector3(m_SnakeDirection.x, 0, m_SnakeDirection.y) * speed * Time.deltaTime;

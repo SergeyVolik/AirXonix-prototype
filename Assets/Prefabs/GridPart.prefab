@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4265378508431413011}
   - component: {fileID: 6387325387944443940}
   - component: {fileID: 1090544756932963135}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: GridPart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -130,6 +130,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 46e1f985a1b14444cb70808befba2548, type: 3}
       propertyPath: m_Name
       value: levelGround
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 46e1f985a1b14444cb70808befba2548, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
