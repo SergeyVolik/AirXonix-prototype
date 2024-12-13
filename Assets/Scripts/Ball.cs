@@ -48,6 +48,12 @@ public class Ball : MonoBehaviour, IBallObstacle
         {
             tailPart.DestroyObstacle();
         }
+
+        var character = collision.collider.GetComponent<CharacterController>();
+        if (character)
+        {
+            character.ForceDeath();
+        }
     }
 
     private void Update()

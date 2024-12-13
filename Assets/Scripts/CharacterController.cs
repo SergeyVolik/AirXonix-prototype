@@ -42,7 +42,7 @@ public class CharacterController : MonoBehaviour
 
         if (cell.HasGround)
         {
-            ClearSnake();
+            TryFinishSnake();
             SimpleMovement(input);
         }
         else
@@ -53,7 +53,17 @@ public class CharacterController : MonoBehaviour
         m_SnakeTail.Update(Time.deltaTime);
     }
 
+    private void OnDestroy()
+    {
+        ClearSnake();
+    }
+
     private void ClearSnake()
+    {
+        m_SnakeTail.Clear();
+    }
+
+    private void TryFinishSnake()
     {
         if (m_SnakeDirection == Vector2.zero)
             return;

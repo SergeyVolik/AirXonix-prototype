@@ -94,16 +94,18 @@ public class Level : MonoBehaviour
 
     public Transform playerSpawnPoint;
     private IPlayerFactory m_playerFactory;
-
+    private PlayerLifes m_playerLifes;
     public CinemachineVirtualCamera vCamera;
 
     [Inject]
-    void Construct(IPlayerFactory playerFactory)
+    void Construct(IPlayerFactory playerFactory, PlayerLifes playerLifes)
     {
         m_playerFactory = playerFactory;
+        m_playerLifes = playerLifes;
     }
 
     public Bounds bounds;
+    private GameObject m_CurrentPlayer;
 
     public Bounds Bounds => bounds;
     private void Awake()
@@ -124,6 +126,33 @@ public class Level : MonoBehaviour
         m_LevelGrid.onGroundDestroyed += M_LevelGrid_onGroundDestroyed;
 
         SetupLevelObjects();
+
+        Countdown.onFinished += Countdown_onFinished;
+        onPlayerSpawned += M_LevelInstance_onPlayerSpawned;
+    }
+
+    private void M_LevelInstance_onPlayerSpawned(GameObject obj)
+    {
+        var charController = obj.GetComponent<CharacterController>();
+        charController.SnakeTail.onSnakeHeadDestroyed += RespawnPlayer;
+        charController.onSnakeSelfCollision += RespawnPlayer;
+        charController.onDeath += CharController_onDeath;
+    }
+
+    private void CharController_onDeath()
+    {
+        RespawnPlayer();
+    }
+
+    private void Countdown_onFinished()
+    {
+        RespawnPlayer();
+    }
+
+    void RespawnPlayer()
+    {
+        m_playerLifes.CurrentLifes--;
+        SpawnPlayer();
     }
 
     private void Start()
@@ -147,14 +176,17 @@ public class Level : MonoBehaviour
 
     private void SpawnPlayer()
     {
-        var player = m_playerFactory.SpawnPlayer(playerSpawnPoint.position);
-        player.transform.parent = transform;
-        player.transform.position = playerSpawnPoint.position;
-        player.GetComponent<CharacterController>().BindLevel(this);
-        vCamera.Follow = player.transform;
-        vCamera.LookAt = player.transform;
+        if (m_CurrentPlayer != null)
+            GameObject.Destroy(m_CurrentPlayer);
 
-        onPlayerSpawned?.Invoke(player);
+        m_CurrentPlayer = m_playerFactory.SpawnPlayer(playerSpawnPoint.position);
+        m_CurrentPlayer.transform.parent = transform;
+        m_CurrentPlayer.transform.position = playerSpawnPoint.position;
+        m_CurrentPlayer.GetComponent<CharacterController>().BindLevel(this);
+        vCamera.Follow = m_CurrentPlayer.transform;
+        vCamera.LookAt = m_CurrentPlayer.transform;
+
+        onPlayerSpawned?.Invoke(m_CurrentPlayer);
     }
 
     private void SetupLevelObjects()
@@ -542,7 +574,7 @@ public class LevelGrid : IDisposable
     internal Bounds CalculateBounds()
     {
         Vector3 pos1 = gridItems[0].Transform.position;
-        Vector3 pos2 = gridItems[height-1].Transform.position;
+        Vector3 pos2 = gridItems[height - 1].Transform.position;
         Vector3 pos3 = gridItems[width * height - 1].Transform.position;
         Vector3 pos4 = gridItems[(width - 1) * height].Transform.position;
 

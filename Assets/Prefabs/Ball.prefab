@@ -147,7 +147,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9e1a837edc13ae4595b7c0d3ec1c464, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  speed: 3
+  wallDestructor: 0
 --- !u!114 &2513191261282678685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,8 +164,8 @@ MonoBehaviour:
   destructable: 0
   girdCell:
     <Transform>k__BackingField: {fileID: 0}
-    <HasGround>k__BackingField: 0
     leftNeighbourIndex: -1
     rightNeighbourIndex: -1
     topNeighbourIndex: -1
     downNeighbourIndex: -1
+    groundInstance: {fileID: 0}
