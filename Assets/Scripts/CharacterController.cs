@@ -62,7 +62,7 @@ public class CharacterController : MonoBehaviour
         for (int i = 0; i < m_SnakeTail.TailCells.Count; i++)
         {
             if (m_SnakeTail.TailInstance[i] != null)
-                m_Level.Grid.SpawnGroundOnCell(m_SnakeTail.TailCells[i]);
+                m_Level.Grid.ActivatedGroundOnCell(m_SnakeTail.TailCells[i]);
         }
 
         m_Level.TryFillArea(m_SnakeTail.TailCells.ToArray());

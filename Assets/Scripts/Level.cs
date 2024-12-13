@@ -264,7 +264,7 @@ public class Level : MonoBehaviour
                         foreach (var item2 in m_VisitedCells)
                         {
                             item2.IsAlreadyVisited = false;
-                            m_LevelGrid.SpawnGroundOnCell(item2, 0.6f);
+                            m_LevelGrid.ActivateGroundOnCell(item2, 0.6f);
                         }
                     }
                     else
@@ -301,11 +301,6 @@ public class Level : MonoBehaviour
         if (m_Countdown != null)
             m_Countdown.Update(Time.deltaTime);
     }
-
-    internal void GetPlayer()
-    {
-        throw new NotImplementedException();
-    }
 }
 
 [System.Serializable]
@@ -313,8 +308,8 @@ public class LevelGridCell : IDisposable
 {
     [field: SerializeField]
     public Transform Transform { get; private set; }
-    [field: SerializeField]
-    public bool HasGround { get; set; }
+
+    public bool HasGround => groundInstance.activeSelf;
 
     public bool IsTailPart { get; set; }
 
@@ -323,7 +318,7 @@ public class LevelGridCell : IDisposable
     public int topNeighbourIndex = -1;
     public int downNeighbourIndex = -1;
 
-
+    public GameObject groundInstance;
     public bool IsAlreadyVisited { get; set; }
     public LevelGridCell() { }
 
@@ -412,10 +407,9 @@ public class LevelGrid : IDisposable
                 LevelGridCell levelGridCell = new LevelGridCell(cellObject);
                 gridItems[x * width + y] = levelGridCell;
 
-                if (pixel == Color.black)
-                {
-                    SpawnGroundInEditor(levelGridCell);
-                }
+                var ground = SpawnGroundInEditor(levelGridCell);
+
+                ground.SetActive(pixel == Color.black);
             }
         }
 
@@ -483,9 +477,9 @@ public class LevelGrid : IDisposable
         return gridItems[x * width + y];
     }
 
-    public GameObject SpawnGroundOnCell(LevelGridCell cell, float showTime)
+    public GameObject ActivateGroundOnCell(LevelGridCell cell, float showTime)
     {
-        var item = SpawnGroundOnCell(cell);
+        var item = ActivatedGroundOnCell(cell);
 
         item.transform.localPosition = new Vector3(0, -0.5f, 0);
         item.transform.DOLocalMoveY(0, showTime).SetEase(Ease.OutSine);
@@ -499,15 +493,15 @@ public class LevelGrid : IDisposable
         GameObject instance = PrefabUtility.InstantiatePrefab(levelPartPrefab) as GameObject;
         instance.transform.parent = cell.Transform;
         instance.transform.localPosition = Vector3.zero;
-        cell.HasGround = true;
+        cell.groundInstance = instance;
         return instance;
     }
 #endif
-    public GameObject SpawnGroundOnCell(LevelGridCell cell)
+    public GameObject ActivatedGroundOnCell(LevelGridCell cell)
     {
         onGroundCreated?.Invoke();
-        GameObject instance = GameObject.Instantiate(levelPartPrefab, cell.Transform);
-        cell.HasGround = true;
+        GameObject instance = cell.groundInstance;
+        instance.gameObject.SetActive(true);
         var obstacle = instance.GetComponent<BallObstacle>();
         obstacle.onDestroyed += Obstacle_onDestroyed;
         obstacle.destructable = true;

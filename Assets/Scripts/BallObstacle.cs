@@ -19,7 +19,6 @@ public class BallObstacle : MonoBehaviour, IBallObstacle
     public void DestroyObstacle()
     {
         onDestroyed?.Invoke();
-        girdCell.HasGround = false;
-        GameObject.Destroy(gameObject);
+        gameObject.SetActive(false);
     }
 }
